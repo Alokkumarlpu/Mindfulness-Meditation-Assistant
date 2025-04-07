@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindful Moments - Meditation Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-emerald-800 mb-4">🧘 Mindful Moments</h1>
+            <p class="text-lg text-emerald-700">Your Personal Mindfulness Meditation Guide</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div id="chat-container" class="h-96 overflow-y-auto mb-4 space-y-4"></div>
+            <div class="flex gap-4">
+                <input type="text" id="user-input" 
+                    class="flex-1 p-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-400"
+                    placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" 
+                    class="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors">
+                    Send
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <button onclick="fetchMeditation('5-minute meditation')" class="btn">🕔 5-Min Session</button>
+            <button onclick="fetchMeditation('body scan')" class="btn">👁️ Body Scan</button>
+            <button onclick="fetchMeditation('breathing exercise')" class="btn">🌬️ Breathing</button>
+            <button onclick="fetchMeditation('sleep meditation')" class="btn">🌙 Sleep Aid</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+        const API_KEY = 'AIzaSyD5CamuZMUL5wyV4OK2WyzICW8qubD8sOg'; // Replace with your actual API key
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const userMessage = userInput.value.trim();
+            if (!userMessage) return;
+            fetchMeditation(userMessage);
+        }
+
+        async function fetchMeditation(prompt) {
+            addMessageToChat(prompt, 'user');
+            userInput.value = '';
+
+            try {
+                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await response.json();
+                const assistantMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || "⚠️ No response received.";
+                addMessageToChat(assistantMessage, 'assistant');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessageToChat('⚠️ Error processing your request. Please try again.', 'error');
+            }
+        }
+
+        function addMessageToChat(message, role) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex justify-${role === 'user' ? 'end' : 'start'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `p-4 rounded-lg max-w-[80%] ${
+                role === 'user' ? 'bg-blue-100 text-blue-800' : 
+                role === 'error' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'
+            }`;
+            contentDiv.innerHTML = message.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+
+    <style>
+        .btn {
+            background-color: #d1fae5;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #a7f3d0;
+        }
+    </style>
+</body>
+</html>
