@@ -1,104 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mindful Moments - Meditation Assistant</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mindful Moments</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-emerald-800 mb-4">🧘 Mindful Moments</h1>
-            <p class="text-lg text-emerald-700">Your Personal Mindfulness Meditation Guide</p>
-        </header>
+<body class="bg-gradient-to-br from-indigo-100 to-purple-200 min-h-screen">
 
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div id="chat-container" class="h-96 overflow-y-auto mb-4 space-y-4"></div>
-            <div class="flex gap-4">
-                <input type="text" id="user-input" 
-                    class="flex-1 p-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-400"
-                    placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
-                <button onclick="sendMessage()" 
-                    class="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors">
-                    Send
-                </button>
-            </div>
+  <!-- Login Page -->
+  <div id="loginPage" class="fixed inset-0 bg-white/90 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+      <h2 class="text-3xl font-bold text-purple-600 mb-6 text-center">Welcome Back</h2>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-gray-700 mb-2">Email</label>
+          <input type="email" id="loginEmail"
+                 class="w-full p-3 border-2 border-purple-100 rounded-lg focus:outline-none focus:border-purple-400"
+                 placeholder="user@example.com">
         </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <button onclick="fetchMeditation('5-minute meditation')" class="btn">🕔 5-Min Session</button>
-            <button onclick="fetchMeditation('body scan')" class="btn">👁️ Body Scan</button>
-            <button onclick="fetchMeditation('breathing exercise')" class="btn">🌬️ Breathing</button>
-            <button onclick="fetchMeditation('sleep meditation')" class="btn">🌙 Sleep Aid</button>
+        <div>
+          <label class="block text-gray-700 mb-2">Password</label>
+          <input type="password" id="loginPassword"
+                 class="w-full p-3 border-2 border-purple-100 rounded-lg focus:outline-none focus:border-purple-400"
+                 placeholder="••••••••">
         </div>
+        <button type="button" onclick="attemptLogin()" 
+                class="w-full bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 transition-colors">
+          Sign In
+        </button>
+        <div id="loginError" class="text-red-500 text-center hidden">Invalid credentials. Try again.</div>
+      </form>
+      <button onclick="toggleLogin()" class="w-full mt-4 text-purple-600 hover:text-purple-700">
+        Continue without logging in
+      </button>
     </div>
+  </div>
 
-    <script>
-        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-        const API_KEY = 'AIzaSyD5CamuZMUL5wyV4OK2WyzICW8qubD8sOg'; // Replace with your actual API key
-        const chatContainer = document.getElementById('chat-container');
-        const userInput = document.getElementById('user-input');
+  <!-- Meditation App -->
+  <div id="appSection" class="hidden">
+    <!-- Navigation -->
+    <nav class="bg-white/80 backdrop-blur-sm fixed w-full z-50">
+      <div class="container mx-auto px-4 py-3">
+        <h1 class="text-2xl font-semibold text-purple-600">🧘 Mindful Moments</h1>
+      </div>
+    </nav>
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 pt-20 pb-8">
+      <!-- Timer -->
+      <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div class="text-center">
+          <div id="timer" class="text-6xl font-bold text-gray-800 mb-4">05:00</div>
+          <div class="flex justify-center space-x-4">
+            <button onclick="startTimer()" id="startBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">Start</button>
+            <button onclick="pauseTimer()" id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg">Pause</button>
+            <button onclick="resetTimer()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meditation Type -->
+      <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Meditation Type</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="fetchMeditation('Breathing')" data-type="Breathing" class="meditation-type bg-blue-100 hover:bg-blue-200 text-blue-800 p-3 rounded-lg">🌬️ Breathing</button>
+          <button onclick="fetchMeditation('Body Scan')" data-type="Body Scan" class="meditation-type bg-purple-100 hover:bg-purple-200 text-purple-800 p-3 rounded-lg">👁️ Body Scan</button>
+          <button onclick="fetchMeditation('Loving Kindness')" data-type="Loving Kindness" class="meditation-type bg-pink-100 hover:bg-pink-200 text-pink-800 p-3 rounded-lg">💖 Loving Kindness</button>
+          <button onclick="fetchMeditation('Mantra')" data-type="Mantra" class="meditation-type bg-green-100 hover:bg-green-200 text-green-800 p-3 rounded-lg">🔄 Mantra</button>
+        </div>
+      </div>
+
+      <!-- Meditation Tips -->
+      <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex justify-between items-center cursor-pointer" onclick="toggleTips()">
+          <h2 class="text-xl font-semibold text-gray-800">Meditation Tips</h2>
+          <span id="tipsArrow" class="text-xl">▼</span>
+        </div>
+        <div id="tipsContent" class="mt-4 hidden">
+          <ul class="space-y-2 text-gray-600">
+            <li>✅ Find a quiet comfortable space</li>
+            <li>✅ Sit with straight posture</li>
+            <li>✅ Focus on your breath</li>
+            <li>✅ Acknowledge wandering thoughts</li>
+            <li>✅ Be kind to yourself</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Duration Input -->
+      <div class="max-w-md mx-auto mt-8 text-center">
+        <label class="text-gray-600">Session Duration (minutes):</label>
+        <input type="number" id="duration" min="1" value="5" class="ml-2 w-16 px-2 py-1 border rounded">
+      </div>
+    </main>
+
+    <!-- Chatbot -->
+    <div id="chatbot" class="fixed bottom-4 right-4 max-w-sm w-full bg-white shadow-xl rounded-2xl overflow-hidden z-50">
+      <div class="bg-purple-600 text-white px-4 py-3 flex justify-between items-center">
+        <h3 class="font-semibold">🤖 Assistant</h3>
+      </div>
+      <div id="chatContent" class="h-64 overflow-y-auto p-4 space-y-2 text-sm text-gray-700 bg-white">
+        <div class="bg-gray-100 p-2 rounded-md">Hello! How can I assist you today? 🌟</div>
+      </div>
+      <div class="flex items-center border-t px-3 py-2 bg-gray-50">
+        <input id="chatInput" type="text" placeholder="Type a message..." class="flex-1 border rounded-md px-3 py-1 text-sm focus:outline-none" onkeypress="handleKeyPress(event)">
+        <button onclick="fetchMeditation(chatInput.value)" class="ml-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded">Send</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Toggle Login
+  function toggleLogin() {
+    document.getElementById('loginPage').classList.toggle('hidden');
+    document.getElementById('appSection').classList.toggle('hidden');
+  }
+
+  function attemptLogin() {
+    const errorElement = document.getElementById('loginError');
+    errorElement.classList.remove('hidden');
+    setTimeout(() => errorElement.classList.add('hidden'), 3000);
+  }
+
+  // Timer
+  let timeLeft;
+  let timerId = null;
+  let isRunning = false;
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  function updateDisplay(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    document.getElementById('timer').textContent = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  }
+
+  function playBell() {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 1);
+  }
+
+  function startTimer() {
+    if (!isRunning) {
+      const duration = parseInt(document.getElementById('duration').value) * 60;
+      timeLeft = timeLeft || duration;
+      timerId = setInterval(() => {
+        timeLeft--;
+        updateDisplay(timeLeft);
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          isRunning = false;
+          playBell();
         }
+      }, 1000);
+      isRunning = true;
+      document.getElementById('startBtn').disabled = true;
+    }
+  }
 
-        async function sendMessage() {
-            const userMessage = userInput.value.trim();
-            if (!userMessage) return;
-            fetchMeditation(userMessage);
-        }
+  function pauseTimer() {
+    clearInterval(timerId);
+    isRunning = false;
+    document.getElementById('startBtn').disabled = false;
+  }
 
-        async function fetchMeditation(prompt) {
-            addMessageToChat(prompt, 'user');
-            userInput.value = '';
+  function resetTimer() {
+    clearInterval(timerId);
+    isRunning = false;
+    const duration = parseInt(document.getElementById('duration').value) * 60;
+    timeLeft = duration;
+    updateDisplay(timeLeft);
+    document.getElementById('startBtn').disabled = false;
+  }
 
-            try {
-                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
+  // Tips toggle
+  function toggleTips() {
+    const tipsContent = document.getElementById('tipsContent');
+    const tipsArrow = document.getElementById('tipsArrow');
+    tipsContent.classList.toggle('hidden');
+    tipsArrow.textContent = tipsContent.classList.contains('hidden') ? '▼' : '▲';
+  }
 
-                const data = await response.json();
-                const assistantMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || "⚠️ No response received.";
-                addMessageToChat(assistantMessage, 'assistant');
-            } catch (error) {
-                console.error('Error:', error);
-                addMessageToChat('⚠️ Error processing your request. Please try again.', 'error');
-            }
-        }
+  // Gemini API
+  const API_KEY = 'AIzaSyCbLK1hEULA4e4bp3TZu0k3Ah5ZwlXcQvk'; // Replace with your key
+  const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-        function addMessageToChat(message, role) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `flex justify-${role === 'user' ? 'end' : 'start'}`;
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = `p-4 rounded-lg max-w-[80%] ${
-                role === 'user' ? 'bg-blue-100 text-blue-800' : 
-                role === 'error' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'
-            }`;
-            contentDiv.innerHTML = message.replace(/\n/g, '<br>');
-            
-            messageDiv.appendChild(contentDiv);
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-    </script>
+  function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+      fetchMeditation(document.getElementById('chatInput').value);
+    }
+  }
 
-    <style>
-        .btn {
-            background-color: #d1fae5;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            transition: background-color 0.2s;
-        }
-        .btn:hover {
-            background-color: #a7f3d0;
-        }
-    </style>
+  async function fetchMeditation(prompt) {
+    if (!prompt.trim()) return;
+    addMessageToChat(prompt, 'user');
+    document.getElementById('chatInput').value = '';
+    try {
+      const res = await fetch(`${API_URL}?key=${API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await res.json();
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "⚠️ No response received.";
+      addMessageToChat(reply, 'assistant');
+    } catch (e) {
+      console.error(e);
+      addMessageToChat("⚠️ Error contacting assistant.", 'error');
+    }
+  }
+
+  function addMessageToChat(message, role) {
+    const chat = document.getElementById('chatContent');
+    const div = document.createElement('div');
+    div.className = `p-2 rounded-md ${role === 'user' ? 'bg-purple-100 text-right' : role === 'error' ? 'bg-red-100' : 'bg-gray-100'}`;
+    div.innerHTML = message.replace(/\n/g, '<br>');
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  resetTimer();
+</script>
+
 </body>
 </html>
